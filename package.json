@@ -1,0 +1,6 @@
+{
+  "name": "bzrflag-client",
+  "version": "0.0.1",
+  "author": "Ryan Stringham",
+  "main": "src/client.js"
+}
