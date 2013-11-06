@@ -249,20 +249,28 @@ BZRClient.prototype.readObstacles = function(callback) {
 	});
 };
 
+/**
+ * This gets the occ grid from the server. The server returns
+ * the occ grid in a weird format, this method converts it to
+ * a grid with the top left corner being in position 0,0 and 
+ * it returns the position of the top left corner.
+ */
 BZRClient.prototype.readOccgrid = function(callback) {
 	var me = this;
-	var grid = {grid:{}};
-	this.readArray(function(line){
-		if(line.indexOf('fail') != -1){
-			callback(grid);
-			return;
-		}
+	var grid = {grid:[]};
+	this.expect('begin', false, function(){
 		me.expect('at', false, function(pos){
-			pos = pos.split(',');
+			pos = pos[0].split(',');
 			grid.pos = {x:parseFloat(pos[0]),y:parseFloat(pos[1])};
 			me.expect('size', false, function(size){
-				size=size.split('x');
+				size=size[0].split('x');
 				grid.size = {x:parseFloat(size[0]),y:parseFloat(size[1])};
+
+				grid.pos.y+=grid.size.y;
+				grid.grid = [];
+				for(var i=0; i<grid.size.y; i++){
+					grid.grid.push([]);
+				}
 				getRow(0);
 			});
 		});
@@ -270,11 +278,15 @@ BZRClient.prototype.readOccgrid = function(callback) {
 
 	function getRow(index){
 		if(index == grid.size.x){
-			callback(grid);
+			me.expect('end', false, function(){
+				callback(grid);
+			});
+			return;
 		}
 		me.readArray(function(line){
+			line = line[0];
 			for(var i=0; i<line.length; i++){
-				grid.grid[index+','+i] = line[i] == '1' ? 1 : 0;
+				grid.grid[grid.grid.length-1-i].push(line[i] == '1' ? 1 : 0);
 			}
 			getRow(index+1);
 		});
@@ -471,7 +483,7 @@ BZRClient.prototype.getObstacles = function(callback) {
 };
 
 BZRClient.prototype.getOccgrid = function(tankId, callback) {
-	this.getInfo('occgrid', bind(this.readOccgrid,this), callback);
+	this.getInfo('occgrid ' + tankId, bind(this.readOccgrid,this), callback);
 };
 
 BZRClient.prototype.getFlags = function(callback) {
