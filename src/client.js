@@ -61,6 +61,26 @@ BZRClient.prototype.getInfo = function(command, reader, callback){
 	});
 }
 
+BZRClient.prototype.getGrid = function(command, reader, callback){
+	var me = this;
+	this.runCommand(function(done){
+		me.expectMultiple(['ack','fail'], false, function(i, result){
+			if(i==0){
+				reader(function(result){
+					if(callback)
+						callback(result);
+					done();
+				});
+			} else {
+				console.log('no occgrid, tank is dead ' + command);
+				if(callback)
+					callback({grid:[[]],pos:{x:0,y:0},size:{x:0,y:0}});
+				done();
+			}
+		});
+	})
+}
+
 BZRClient.prototype.nextCommand = function() {
 	if(!this.runningCommand && this.queue.length > 0){
 		this.queue.shift()();
@@ -483,7 +503,7 @@ BZRClient.prototype.getObstacles = function(callback) {
 };
 
 BZRClient.prototype.getOccgrid = function(tankId, callback) {
-	this.getInfo('occgrid ' + tankId, bind(this.readOccgrid,this), callback);
+	this.getGrid('occgrid ' + tankId, bind(this.readOccgrid,this), callback);
 };
 
 BZRClient.prototype.getFlags = function(callback) {
