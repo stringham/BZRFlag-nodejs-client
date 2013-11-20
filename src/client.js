@@ -64,6 +64,7 @@ BZRClient.prototype.getInfo = function(command, reader, callback){
 BZRClient.prototype.getGrid = function(command, reader, callback){
 	var me = this;
 	this.runCommand(function(done){
+		me.sendCommand(command);
 		me.expectMultiple(['ack','fail'], false, function(i, result){
 			if(i==0){
 				reader(function(result){
